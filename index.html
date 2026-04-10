@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS2 Pro Search — Marketplace Explorer</title>
+    <meta name="description" content="Знайди і порівняй ціни на скіни CS2 на Steam, CSFloat, Skinport і DMarket з одного зручного місця.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══════════════════ SIDEBAR OVERLAY (mobile) ═══════════════════ -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<header class="main-header">
+    <button class="btn-hamburger" id="btnHamburger" onclick="toggleSidebar()" aria-label="Меню">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+    </button>
+
+    <a href="/" class="logo">
+        <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M2 17l10 5 10-5" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="logo-text">
+            <span class="logo-main">CS2 PRO</span>
+            <span class="logo-sub">Огляд Маркету</span>
+        </div>
+    </a>
+
+    <div class="search-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="Пошук (Asiimov, Fade, Katowice...)">
+        <button class="btn-search" onclick="handleSearch(true)">Шукати</button>
+    </div>
+
+    <div class="header-right">
+        <div class="market-indicators">
+            <span class="mkt-dot steam"></span>
+            <span class="mkt-dot csfloat"></span>
+            <span class="mkt-dot skinport"></span>
+            <span class="mkt-dot dmarket"></span>
+        </div>
+        <button class="btn-lang" onclick="toggleLanguage()"><span id="langFlag">🇬🇧</span> <span id="langLabel">EN</span></button>
+
+        <!-- Favorites button — always visible -->
+        <button id="btnHeaderFavs" class="btn-header-favs" onclick="toggleFavPanel()" title="Уподобані предмети">
+            ♡ <span>Уподобані</span>
+            <span id="headerFavCount" class="header-fav-count">0</span>
+        </button>
+
+        <button id="steamLoginBtn" class="btn-steam-login" onclick="steamLogin()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0z"/></svg>
+            CS2 Player
+        </button>
+        <div id="steamProfile" class="profile-badge" style="display:none;">
+            <img id="panelAvatar" src="" alt="" class="profile-avatar">
+            <span id="panelName" class="profile-name"></span>
+            <span id="wishlistCountBadge" class="wishlist-badge">0</span>
+            <button class="btn-profile-action" onclick="toggleProfilePanel()">Wishlist</button>
+        </div>
+    </div>
+</header>
+
+<!-- ═══════════════════ MAIN CONTENT ═══════════════════ -->
+<div class="page-wrap">
+
+    <!-- ═══ LEFT SIDEBAR ═══ -->
+    <aside class="sidebar">
+
+        <!-- Hero Block -->
+        <div class="hero-block">
+            <div class="hero-tag">CS2 MARKETPLACE</div>
+            <h1 class="hero-title">Знайди свій <span class="hero-grd">ідеальний скін</span></h1>
+            <p class="hero-sub">Порівнюй ціни на Steam, CSFloat, Skinport та DMarket в реальному часі. Збирай у Wishlist та підписуйся на пропозиції.</p>
+
+            <div class="hero-stats-row">
+                <div class="hero-stat"><span id="heroWishlistCount" class="hero-stat-num">0</span><span class="hero-stat-label">Wishlist</span></div>
+                <div class="hero-stat"><span class="hero-stat-num">4</span><span class="hero-stat-label">Маркети</span></div>
+                <div class="hero-stat"><span class="hero-stat-num">850K+</span><span class="hero-stat-label">Предметів</span></div>
+            </div>
+
+            <div class="hero-market-dots">
+                <span class="hero-mkt"><span class="hm-dot steam"></span>Steam Market</span>
+                <span class="hero-mkt"><span class="hm-dot csfloat"></span>CSFloat</span>
+                <span class="hero-mkt"><span class="hm-dot skinport"></span>Skinport</span>
+                <span class="hero-mkt"><span class="hm-dot dmarket"></span>DMarket</span>
+            </div>
+        </div>
+
+        <!-- Quick Search -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-label">ШВИДКИЙ ПОШУК</div>
+            <div class="quick-pills">
+                <button class="qpill" onclick="quickSearch('AK-47')">AK-47</button>
+                <button class="qpill" onclick="quickSearch('AWP')">AWP</button>
+                <button class="qpill" onclick="quickSearch('Karambit')">Karambit</button>
+                <button class="qpill" onclick="quickSearch('Gloves')">Gloves</button>
+                <button class="qpill" onclick="quickSearch('M4A4')">M4A4</button>
+                <button class="qpill" onclick="quickSearch('Desert Eagle')">Deagle</button>
+                <button class="qpill" onclick="quickSearch('Butterfly Knife')">Butterfly</button>
+                <button class="qpill" onclick="quickSearch('StatTrak')">StatTrak</button>
+            </div>
+        </div>
+
+        <!-- Category -->
+        <div class="sidebar-section">
+            <div class="sidebar-section-label">КАТЕГОРІЯ</div>
+            <div class="cat-list" id="categoryCards">
+                <button class="cat-item active" data-cat="" onclick="selectCat(this,'')"><span class="cat-emoji">🎮</span> Всі</button>
+                <button class="cat-item" data-cat="rifle" onclick="selectCat(this,'rifle')"><span class="cat-emoji">🔫</span> Гвинтівки</button>
+                <button class="cat-item" data-cat="sniper" onclick="selectCat(this,'sniper')"><span class="cat-emoji">🎯</span> Снайпер</button>
+                <button class="cat-item" data-cat="pistol" onclick="selectCat(this,'pistol')"><span class="cat-emoji">🔸</span> Пістолети</button>
+                <button class="cat-item" data-cat="smg" onclick="selectCat(this,'smg')"><span class="cat-emoji">⚡</span> СМГ</button>
+                <button class="cat-item" data-cat="shotgun" onclick="selectCat(this,'shotgun')"><span class="cat-emoji">💥</span> Дробовик</button>
+                <button class="cat-item" data-cat="machinegun" onclick="selectCat(this,'machinegun')"><span class="cat-emoji">🌀</span> Кулемет</button>
+                <button class="cat-item" data-cat="knife" onclick="selectCat(this,'knife')"><span class="cat-emoji">🔪</span> Ножі</button>
+                <button class="cat-item" data-cat="gloves" onclick="selectCat(this,'gloves')"><span class="cat-emoji">🧤</span> Рукавиці</button>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- ═══ MAIN AREA ═══ -->
+    <main class="main-area">
+
+        <!-- Filters Bar -->
+        <div class="filters-bar">
+
+            <!-- ── COMPACT MAIN ROW ── -->
+            <div class="filters-main-row">
+
+                <!-- Model -->
+                <select id="filterWeapon" class="fselect fselect-compact" onchange="handleSearch(true)" title="Модель зброї">
+                    <option value="">🔫 Модель</option>
+                    <optgroup label="Rifles"><option>AK-47</option><option>M4A4</option><option>M4A1-S</option><option>AWP</option><option>Galil AR</option><option>FAMAS</option></optgroup>
+                    <optgroup label="Pistols"><option>USP-S</option><option>Glock-18</option><option>Desert Eagle</option><option>P250</option></optgroup>
+                    <optgroup label="SMGs"><option>MP5-SD</option><option>MP7</option><option>P90</option></optgroup>
+                    <optgroup label="Knives"><option>Karambit</option><option>M9 Bayonet</option><option>Butterfly Knife</option></optgroup>
+                </select>
+
+                <!-- Divider -->
+                <div class="filter-divider"></div>
+
+                <!-- Condition pills -->
+                <div class="cond-row cond-row-compact">
+                    <button class="cpill active" data-val="" onclick="selectCondition(this,'')">Всі</button>
+                    <button class="cpill fn" data-val="Factory New" onclick="selectCondition(this,'Factory New')" title="Factory New">FN</button>
+                    <button class="cpill mw" data-val="Minimal Wear" onclick="selectCondition(this,'Minimal Wear')" title="Minimal Wear">MW</button>
+                    <button class="cpill ft" data-val="Field-Tested" onclick="selectCondition(this,'Field-Tested')" title="Field-Tested">FT</button>
+                    <button class="cpill ww" data-val="Well-Worn" onclick="selectCondition(this,'Well-Worn')" title="Well-Worn">WW</button>
+                    <button class="cpill bs" data-val="Battle-Scarred" onclick="selectCondition(this,'Battle-Scarred')" title="Battle-Scarred">BS</button>
+                </div>
+
+                <!-- Divider -->
+                <div class="filter-divider"></div>
+
+                <!-- Rarity swatches (compact dots) -->
+                <div class="rarity-swatches" id="raritySwatches">
+                    <button class="rswatch active" data-val="" onclick="selectRarity(this,'')" title="Будь-яка рідкість"><span class="rswatch-dot" style="background:linear-gradient(135deg,#b0c3d9,#eb4b4b)"></span></button>
+                    <button class="rswatch" data-val="Consumer" onclick="selectRarity(this,'Consumer')" title="В Широкому вжитку"><span class="rswatch-dot" style="background:#b0c3d9"></span></button>
+                    <button class="rswatch" data-val="Industrial" onclick="selectRarity(this,'Industrial')" title="Промислова якість"><span class="rswatch-dot" style="background:#5e98d9"></span></button>
+                    <button class="rswatch" data-val="Mil-Spec" onclick="selectRarity(this,'Mil-Spec')" title="Армійська якість"><span class="rswatch-dot" style="background:#4b69ff"></span></button>
+                    <button class="rswatch" data-val="Restricted" onclick="selectRarity(this,'Restricted')" title="Заборонене"><span class="rswatch-dot" style="background:#8847ff"></span></button>
+                    <button class="rswatch" data-val="Classified" onclick="selectRarity(this,'Classified')" title="Засекречена"><span class="rswatch-dot" style="background:#d32ce6"></span></button>
+                    <button class="rswatch" data-val="Covert" onclick="selectRarity(this,'Covert')" title="Таємна"><span class="rswatch-dot" style="background:#eb4b4b"></span></button>
+                </div>
+
+                <!-- Spacer -->
+                <div style="flex:1"></div>
+
+                <!-- Price quick display -->
+                <div class="price-quick">
+                    <span class="price-quick-label">💰</span>
+                    <span class="price-val-disp">$<span id="priceMinVal">0</span>–$<span id="priceMaxVal">∞</span></span>
+                </div>
+
+                <!-- More filters toggle -->
+                <button class="btn-more-filters" id="btnMoreFilters" onclick="toggleAdvFilters()">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="3" y1="5" x2="17" y2="5"/><line x1="6" y1="10" x2="14" y2="10"/><line x1="9" y1="15" x2="11" y2="15"/></svg>
+                    Фільтри
+                    <svg id="moreFiltersArrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12" style="transition:.2s"><polyline points="5,8 10,13 15,8"/></svg>
+                </button>
+            </div>
+
+            <!-- ── ADVANCED FILTERS (collapsible) ── -->
+            <div class="filters-advanced" id="filtersAdvanced" style="display:none">
+                <div class="filters-adv-grid">
+                    <div class="fg">
+                        <label class="flabel">ОСОБЛИВІСТЬ</label>
+                        <select id="filterFeature" class="fselect" onchange="handleSearch(true)">
+                            <option value="">Будь-яка</option>
+                            <option value="StatTrak">StatTrak™</option>
+                            <option value="Souvenir">Souvenir</option>
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label class="flabel">НАВИЧКА</label>
+                        <select id="filterSticker" class="fselect" onchange="handleSearch(true)">
+                            <option value="">Будь-яка</option>
+                            <option value="Holo">Holo</option>
+                            <option value="Foil">Foil</option>
+                            <option value="Gold">Gold</option>
+                            <option value="Glitter">Glitter</option>
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label class="flabel">ТУРНІР</label>
+                        <select id="filterTournament" class="fselect" onchange="handleSearch(true)">
+                            <option value="">Всі турніри</option>
+                            <option value="Katowice 2014">Katowice 2014</option>
+                            <option value="Cologne 2014">Cologne 2014</option>
+                            <option value="ESL One Katowice 2015">Katowice 2015</option>
+                            <option value="MLG Columbus 2016">MLG Columbus 2016</option>
+                            <option value="Krakow 2017">Krakow 2017</option>
+                            <option value="Boston 2018">Boston 2018</option>
+                            <option value="Paris 2023">Paris 2023</option>
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label class="flabel">РІК</label>
+                        <select id="filterYear" class="fselect" onchange="handleSearch(true)">
+                            <option value="">Будь-який</option>
+                            <option>2014</option><option>2015</option><option>2016</option>
+                            <option>2017</option><option>2018</option><option>2019</option>
+                            <option>2020</option><option>2021</option><option>2022</option>
+                            <option>2023</option><option>2024</option>
+                        </select>
+                    </div>
+                    <div class="fg price-fg-adv">
+                        <label class="flabel">ЦІНА ($)</label>
+                        <div class="dual-slider-wrap">
+                            <input type="range" id="priceMin" min="0" max="2000" step="5" value="0" class="price-slider" oninput="updateSlider()">
+                            <input type="range" id="priceMax" min="0" max="2000" step="5" value="2000" class="price-slider" oninput="updateSlider()">
+                            <div class="slider-track" id="sliderTrack"></div>
+                        </div>
+                        <div class="price-presets">
+                            <button class="ppreset" onclick="setPreset(0,50)">$0–50</button>
+                            <button class="ppreset" onclick="setPreset(50,200)">$50–200</button>
+                            <button class="ppreset" onclick="setPreset(200,1000)">$200–1K</button>
+                            <button class="ppreset" onclick="setPreset(0,2000)">Всі</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Filters -->
+            <div id="activeFiltersBar" class="active-filters-bar" style="display:none;">
+                <span class="af-label">Активні:</span>
+                <div id="activeFilterChips" class="af-chips"></div>
+                <button class="af-clear" onclick="clearAllFilters()">Очистити</button>
+            </div>
+
+        </div>
+
+        <!-- Items Header -->
+        <div class="items-header-row">
+            <div class="items-found">
+                Знайдено на ринку <span id="foundCount" class="found-num">0</span>
+            </div>
+            <div class="sort-wrap">
+                <span class="sort-label">СОРТУВАННЯ</span>
+                <select id="filterSort" class="sort-select" onchange="handleSearch(true)">
+                    <option value="default">За замовчуванням</option>
+                    <option value="price_asc">Ціна ↑</option>
+                    <option value="price_desc">Ціна ↓</option>
+                    <option value="name_asc">Назва А-Я</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loadingBar" class="loading-bar" style="display:none;">
+            <div class="loading-spinner"></div>
+            <span>Завантаження з ринку Steam...</span>
+        </div>
+
+        <!-- Items Grid (SQUARE cards) -->
+        <div id="itemsGrid" class="items-grid"></div>
+
+        <div id="noResults" class="no-results" style="display:none;">
+            <div class="no-icon">🔍</div>
+            <div>Нічого не знайдено. Спробуйте пом'якшити критерії.</div>
+        </div>
+
+        <button id="loadMoreBtn" class="load-more-btn" style="display:none;" onclick="loadMore()">Завантажити ще 100</button>
+
+    </main>
+</div>
+
+<!-- ═══════════════════ PROFILE SIDE PANEL ═══════════════════ -->
+<div id="profileOverlay" class="profile-overlay" onclick="toggleFavPanel()"></div>
+<div id="profilePanel" class="profile-panel">
+    <div class="profile-panel-header">
+        <div class="profile-panel-user">
+            <div style="width:48px;height:48px;border-radius:50%;background:rgba(124,58,237,.15);border:2px solid rgba(124,58,237,.3);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0" id="panelAvatarPlaceholder">♡</div>
+            <img id="panelAvatarBig" src="" class="panel-avatar-big" alt="" style="display:none">
+            <div>
+                <div id="panelNameBig" class="panel-name-big">Уподобані предмети</div>
+                <div class="panel-tag" id="panelTagLine">Доступно без авторизації</div>
+            </div>
+        </div>
+        <button class="panel-close-btn" onclick="toggleFavPanel()">✕</button>
+    </div>
+    <div class="panel-wishlist-total">
+        <div class="panel-total-label">Найкраща ціна (набір)</div>
+        <div id="panelTotalValue" class="panel-total-value">$0.00</div>
+        <div id="panelMarketBreakdown" class="panel-market-breakdown"></div>
+    </div>
+    <div class="panel-items-list" id="panelFavList"></div>
+    <div class="panel-footer" id="profilePanelFooter" style="display:none">
+        <button class="btn-logout" onclick="steamLogout()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Вийти з Steam
+        </button>
+    </div>
+</div>
+
+
+<!-- ═══════════════════ MODAL ═══════════════════ -->
+<div id="modalOverlay" class="modal-overlay" onclick="closeModal()"></div>
+<div id="itemModal" class="item-modal">
+    <button class="modal-close-btn" onclick="closeModal()">✕</button>
+    <div class="modal-body">
+        <div class="modal-left">
+            <div class="modal-viewer-tabs">
+                <button class="viewer-tab active" id="tabPhoto" onclick="switchModalTab('photo')">📷 Фото</button>
+                <button class="viewer-tab" id="tab3D" onclick="switchModalTab('3d')">🎮 3D</button>
+            </div>
+            <div id="viewerPhoto" class="viewer-pane viewer-photo">
+                <img id="modalItemImg" src="" alt="" class="modal-item-img">
+            </div>
+            <div id="viewer3D" class="viewer-pane" style="display:none;">
+                <iframe id="modal3dFrame" src="" class="modal-3d-frame" allowfullscreen></iframe>
+            </div>
+            <div class="modal-inspect-row">
+                <a id="modalInspectLink" href="#" class="btn-inspect" target="_blank" style="display:none;">Відкрити в CS2</a>
+                <button id="btnFetchFloat" class="btn-float" onclick="fetchFloat()" style="display:none;">Перевірити Float</button>
+            </div>
+            <div id="floatResult" class="float-result" style="display:none;">
+                <div class="float-val-row"><span id="floatWearName" class="float-label"></span><span id="floatValText" class="float-val"></span></div>
+                <div class="float-bar-wrap">
+                    <div class="float-bar"><div id="floatBarFill" class="float-bar-fill"></div><div id="floatBarThumb" class="float-bar-thumb"></div></div>
+                    <div class="float-bar-labels"><span>0</span><span>1</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-right">
+            <div class="modal-badges-row">
+                <span id="modalRarityBadge" class="modal-badge rarity-badge"></span>
+                <span id="modalCondBadge" class="modal-badge cond-badge"></span>
+            </div>
+            <h2 id="modalItemName" class="modal-item-name"></h2>
+            <div id="modalItemType" class="modal-item-type"></div>
+            <div id="modalLoreText" class="modal-lore"></div>
+            <div class="modal-markets">
+                <div class="modal-markets-title">💰 Порівняння цін</div>
+                <div id="modalMarketRows" class="modal-market-rows"></div>
+            </div>
+            <div id="modalStickersSection" class="modal-stickers-section" style="display:none;">
+                <div class="modal-stickers-title">🎨 Наліпки</div>
+                <div id="modalStickerItems" class="modal-sticker-items"></div>
+            </div>
+            <div class="modal-action-row">
+                <button id="modalFavBtn" class="btn-modal-fav" onclick="toggleModalFav()">♡ До Wishlist</button>
+                <a id="modalBuyBtn" href="#" target="_blank" class="btn-modal-buy">Купити на Steam</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
