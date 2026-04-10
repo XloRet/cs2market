@@ -1,2 +1,0 @@
-# No extra dependencies required. Standard urllib is used.
-# Added empty file to pass PaaS (Heroku/Render) validations.
