@@ -11,21 +11,46 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import os
+import re
+from dotenv import load_dotenv
+from flask import Flask
+
+# ── Завантажуємо змінні середовища (має бути на початку) ─────────────────────
+load_dotenv()
+
 # ── Config ────────────────────────────────────────────────────────
 STEAM_API_KEY = os.environ.get('STEAM_API_KEY', '')
-SECRET_KEY    = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
-BASE_URL      = os.environ.get('BASE_URL', 'http://127.0.0.1:8000')
-PORT          = int(os.environ.get('PORT', 8000))
-DB_PATH       = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cs2pro.db')
 
-OPENID_NS     = 'http://specs.openid.net/auth/2.0'
-STEAM_OPENID  = 'https://steamcommunity.com/openid/login'
-STEAM_ID_RE   = re.compile(r'https://steamcommunity\.com/openid/id/(\d+)$')
+# SECRET_KEY — обов'язково беремо тільки зі змінних середовища
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is not set! Add it in Render → Environment Variables.")
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+BASE_URL = os.environ.get('BASE_URL', 'https://cs2market-1.onrender.com')  # ← твій реальний домен
+PORT     = int(os.environ.get('PORT', 10000))  # Render зазвичай використовує PORT=10000
+
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cs2pro.db')
+
+OPENID_NS    = 'http://specs.openid.net/auth/2.0'
+STEAM_OPENID = 'https://steamcommunity.com/openid/login'
+STEAM_ID_RE  = re.compile(r'https://steamcommunity\.com/openid/id/(\d+)$')
+
+# ── Flask App ─────────────────────────────────────────────────────
+app = Flask(__name__, 
+            static_folder='.', 
+            static_url_path='')   # щоб style.css і app.js працювали з кореня
+
 app.secret_key = SECRET_KEY
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE']   = False   # True in production with HTTPS
+
+# Налаштування сесій (важливо для Steam авторизації на Render)
+app.config['SESSION_COOKIE_SAMESITE']   = 'Lax'
+app.config['SESSION_COOKIE_SECURE']     = True      # True, бо Render працює через HTTPS
+app.config['SESSION_COOKIE_HTTPONLY']   = True
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 7   # 7 днів (можна змінити)
+
+# Додаткові налаштування безпеки
+app.config['SESSION_COOKIE_NAME'] = 'cs2market_session'
 
 # ── Weapon type detection ─────────────────────────────────────────
 KNIFE_WORDS = ['knife','karambit','bayonet','daggers','talon','ursus',
